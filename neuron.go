@@ -6,7 +6,8 @@ import (
 )
 
 type Neuron struct {
-	Inbound []*Dendron
+	Activation float64
+	Inbound    []*Dendron
 	// Outbound []*Dendron
 }
 
@@ -16,7 +17,7 @@ func (n *Neuron) ConnectTo(l *Layer, r io.Reader) (err error) {
 		d := &Dendron{
 			Neuron: inboundNeuron,
 		}
-		if err = d.Decode(r); err != nil {
+		if err = DecodeFloat64(&d.Strength, r); err != nil {
 			return fmt.Errorf("could not decode dendron data: %w", err)
 		}
 		n.Inbound[i] = d
@@ -24,11 +25,12 @@ func (n *Neuron) ConnectTo(l *Layer, r io.Reader) (err error) {
 	return nil
 }
 
-func (n *Neuron) Activation() (strength float64) {
+func (n *Neuron) Activate() {
+	value := float64(0)
 	for _, d := range n.Inbound {
-		strength += d.Strength
+		value += d.Strength * d.Neuron.Activation
 	}
-	return strength / float64(len(n.Inbound))
+	n.Activation = value / float64(len(n.Inbound))
 }
 
 func (n *Neuron) Learn(desiredActivationStrength float64) {

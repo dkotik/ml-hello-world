@@ -1,35 +1,58 @@
 package neuralnetwork
 
 import (
-	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
-	"math"
 )
 
 type NeuralNetwork struct {
 	Layers []*Layer
 }
 
-type dumbReader struct {
-	same []byte
+// Active set the first layer manually and propagates activation forward through dendrons.
+func (nn *NeuralNetwork) Activate(r io.Reader) {
+	// manually set Activation for the first layer
+	// ...
+
+	if len(nn.Layers) < 1 {
+		return
+	}
+	for _, l := range nn.Layers[1:] { // propagate
+		for _, n := range l.Neurons {
+			n.Activate()
+		}
+	}
 }
 
-func (d *dumbReader) Read(b []byte) (n int, err error) {
-	if len(b) != 8 {
-		return 0, errors.New("float64 requires eight bytes")
+// Learn goes through the layers backwards running [Dendron.Learn].
+func (nn *NeuralNetwork) Learn(value int) {
+	// manually set Activation for the last layer
+	// ...
+
+	for i := len(nn.Layers) - 1; i >= 0; i++ {
+		for _, n := range nn.Layers[i].Neurons {
+			for _, d := range n.Inbound {
+				d.Learn(float64(value)) // TODO: fix.
+			}
+		}
 	}
-	// copy(b, float64(0.5))
-	copy(b, d.same)
-	return 8, nil
+}
+
+func (nn *NeuralNetwork) Dump(w io.Writer) (err error) {
+	for _, l := range nn.Layers {
+		for _, n := range l.Neurons {
+			for _, d := range n.Inbound {
+				if err = EncodeFloat64(w, d.Strength); err != nil {
+					return fmt.Errorf("could not dump neural network: %w", err)
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func NewWithoutLearning(layerSizes ...int) (*NeuralNetwork, error) {
-	var buf [8]byte
-	binary.LittleEndian.PutUint64(buf[:], math.Float64bits(0.5))
-
-	return New(&dumbReader{same: buf[:]}, layerSizes...)
+	return New(newDumbReaderFrom(0.5), layerSizes...)
 }
 
 func New(r io.Reader, layerSizes ...int) (*NeuralNetwork, error) {
