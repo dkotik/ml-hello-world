@@ -7,7 +7,9 @@ import (
 	"math"
 )
 
-// TODO: load IDX data https://pkg.go.dev/gopkg.in/src-d/go-git.v4/plumbing/format/idxfile
+func ByteToFloat64(b byte) float64 {
+	return float64(int(b)) / float64(255)
+}
 
 func EncodeFloat64(w io.Writer, f float64) error {
 	return binary.Write(w, binary.LittleEndian, f)

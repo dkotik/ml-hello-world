@@ -1,6 +1,8 @@
 package neuralnetwork
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
 	"io"
 )
@@ -10,33 +12,47 @@ type NeuralNetwork struct {
 }
 
 // Active set the first layer manually and propagates activation forward through dendrons.
-func (nn *NeuralNetwork) Activate(r io.Reader) {
-	// manually set Activation for the first layer
-	// ...
-
-	if len(nn.Layers) < 1 {
-		return
+func (nn *NeuralNetwork) Activate(r io.Reader) (err error) {
+	if len(nn.Layers) <= 1 {
+		return errors.New("action requires at least two layers")
 	}
+
+	// manually set Activation for the first layer
+	bufferedReader := bufio.NewReader(r)
+	var (
+		i   int
+		one byte
+	)
+	for ; i < len(nn.Layers[0].Neurons); i++ {
+		one, err = bufferedReader.ReadByte()
+		if err != nil {
+			return err
+		}
+		nn.Layers[0].Neurons[i].Activation = ByteToFloat64(one)
+	}
+
 	for _, l := range nn.Layers[1:] { // propagate
 		for _, n := range l.Neurons {
 			n.Activate()
 		}
 	}
+
+	return nil
 }
 
-// Learn goes through the layers backwards running [Dendron.Learn].
-func (nn *NeuralNetwork) Learn(value int) {
-	// manually set Activation for the last layer
-	// ...
-
-	for i := len(nn.Layers) - 1; i >= 0; i++ {
-		for _, n := range nn.Layers[i].Neurons {
-			for _, d := range n.Inbound {
-				d.Learn(float64(value)) // TODO: fix.
-			}
-		}
-	}
-}
+// // Learn goes through the layers backwards running [Dendron.Learn].
+// func (nn *NeuralNetwork) Learn(value int) {
+// 	// manually set Activation for the last layer
+// 	// ...
+//
+// 	for i := len(nn.Layers) - 1; i >= 0; i++ {
+// 		for _, n := range nn.Layers[i].Neurons {
+// 			for _, d := range n.Inbound {
+// 				d.Learn(float64(value)) // TODO: fix.
+// 			}
+// 		}
+// 	}
+// }
 
 func (nn *NeuralNetwork) Dump(w io.Writer) (err error) {
 	for _, l := range nn.Layers {
@@ -52,7 +68,7 @@ func (nn *NeuralNetwork) Dump(w io.Writer) (err error) {
 }
 
 func NewWithoutLearning(layerSizes ...int) (*NeuralNetwork, error) {
-	return New(newDumbReaderFrom(0.5), layerSizes...)
+	return New(newDumbReaderFrom(1.0), layerSizes...)
 }
 
 func New(r io.Reader, layerSizes ...int) (*NeuralNetwork, error) {
