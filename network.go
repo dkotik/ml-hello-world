@@ -40,19 +40,18 @@ func (nn *NeuralNetwork) Activate(r io.Reader) (err error) {
 	return nil
 }
 
-// // Learn goes through the layers backwards running [Dendron.Learn].
-// func (nn *NeuralNetwork) Learn(value int) {
-// 	// manually set Activation for the last layer
-// 	// ...
-//
-// 	for i := len(nn.Layers) - 1; i >= 0; i++ {
-// 		for _, n := range nn.Layers[i].Neurons {
-// 			for _, d := range n.Inbound {
-// 				d.Learn(float64(value)) // TODO: fix.
-// 			}
-// 		}
-// 	}
-// }
+// LearnFrom goes through the layers backwards running [Dendron.Learn].
+func (nn *NeuralNetwork) LearnFrom(f DeviancyMeasure) {
+	if len(nn.Layers) <= 1 {
+		panic("action requires at least two layers")
+	}
+
+	for _, n := range nn.Layers[len(nn.Layers)-1].Neurons {
+		for _, d := range n.Inbound {
+			d.LearnFrom(f)
+		}
+	}
+}
 
 func (nn *NeuralNetwork) Dump(w io.Writer) (err error) {
 	for _, l := range nn.Layers {

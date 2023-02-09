@@ -10,7 +10,32 @@ import (
 
 const targetRecognitionDigit = 1
 
+func TestDigitModel(t *testing.T) {
+	_, verify, err := mnist.Load("./data")
+	if err != nil {
+		t.Fatalf("could not load training data: %v", err)
+	}
+	model := digit.Must(digit.NewFromFile(1, "./models/digit-1-model.bin"))
+
+	// verifyL := len(verify.Images)
+	matched := 0
+	possible := 0
+	for i := 0; i < len(verify.Images) && i < 999999; i++ {
+		if verify.Labels[i] != targetRecognitionDigit {
+			continue // skip other digits
+		}
+		possible++
+		if model.Load(verify.Images[i][:]) {
+			dumpImage(verify.Images[i])
+			matched++
+		}
+	}
+	t.Logf("Model regonized %d images and has %.6f%% recognition strength", matched, float32(matched*100)/float32(possible))
+}
+
 func TestDigitRecognition(t *testing.T) {
+	t.Skip("old")
+
 	train, verify, err := mnist.Load("./data")
 	if err != nil {
 		t.Fatalf("could not load training data: %v", err)
