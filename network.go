@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 )
 
 type NeuralNetwork struct {
@@ -53,6 +54,26 @@ func (nn *NeuralNetwork) Activate(r io.Reader) (err error) {
 // 		}
 // 	}
 // }
+
+func (nn *NeuralNetwork) Initialize(f func(li, ni, di int) (float64, error)) (err error) {
+	if f == nil {
+		f = func(li, ni, di int) (float, error) {
+			return rand.Float64(), nil
+		}
+	}
+
+	for li, l := range nn.Layers {
+		for ni, n := range l.Neurons {
+			for di, d := range n.Inbound {
+				d.Weight, err = f(li, ni, di)
+				if err != nil {
+					return fmt.Errorf("cannot initialize neural network: %w", err)
+				}
+			}
+		}
+	}
+	return nil
+}
 
 func (nn *NeuralNetwork) Dump(w io.Writer) (err error) {
 	for _, l := range nn.Layers {
