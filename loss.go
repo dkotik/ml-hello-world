@@ -2,6 +2,14 @@ package neuralnetwork
 
 import "math"
 
+// Loss measures the deviancy between the model and the learning data. [NeuralNetwork] learns by searching for a minimum loss value using a [GlenBottomFinder].
+type Loss func(float64) float64
+
+// MinimumFinder finds the value between 0.0 and 1.0 that yields the lowest return value of a function.
+type MinimumFinder interface {
+	FindMinimum(start float64, f Loss) float64
+}
+
 // DeviancyMeasure is used by [Dendron] to find a [Dendron.Strength] value that brings the deviancy closest towards 0.
 type DeviancyMeasure func() (score float64)
 

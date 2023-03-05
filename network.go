@@ -29,35 +29,36 @@ func (nn *NeuralNetwork) Activate(r io.Reader) (err error) {
 			return err
 		}
 		nn.Layers[0].Neurons[i].Activation = ByteToFloat64(one)
+		nn.Layers[0].Neurons[i].Propagate()
 	}
 
-	for _, l := range nn.Layers[1:] { // propagate
-		for _, n := range l.Neurons {
-			n.Activate()
-		}
-	}
+	// for _, l := range nn.Layers[1:] { // propagate
+	// 	for _, n := range l.Neurons {
+	// 		n.Activate()
+	// 	}
+	// }
 
 	return nil
 }
 
-// LearnFrom goes through the layers backwards running [Dendron.Learn].
-func (nn *NeuralNetwork) LearnFrom(f DeviancyMeasure) {
-	if len(nn.Layers) <= 1 {
-		panic("action requires at least two layers")
-	}
-
-	for _, n := range nn.Layers[len(nn.Layers)-1].Neurons {
-		for _, d := range n.Inbound {
-			d.LearnFrom(f)
-		}
-	}
-}
+// // LearnFrom goes through the layers backwards running [Dendron.Learn].
+// func (nn *NeuralNetwork) LearnFrom(f DeviancyMeasure) {
+// 	if len(nn.Layers) <= 1 {
+// 		panic("action requires at least two layers")
+// 	}
+//
+// 	for _, n := range nn.Layers[len(nn.Layers)-1].Neurons {
+// 		for _, d := range n.Inbound {
+// 			d.LearnFrom(f)
+// 		}
+// 	}
+// }
 
 func (nn *NeuralNetwork) Dump(w io.Writer) (err error) {
 	for _, l := range nn.Layers {
 		for _, n := range l.Neurons {
 			for _, d := range n.Inbound {
-				if err = EncodeFloat64(w, d.Strength); err != nil {
+				if err = EncodeFloat64(w, d.Weight); err != nil {
 					return fmt.Errorf("could not dump neural network: %w", err)
 				}
 			}
