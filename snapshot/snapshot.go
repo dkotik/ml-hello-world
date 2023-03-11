@@ -35,6 +35,9 @@ type Snapshot struct {
 }
 
 func (s *Snapshot) Validate() error {
+	if s == nil {
+		return errors.New("cannot use a <nil> neural network snapshot")
+	}
 	if len(s.Layers) < 2 {
 		return errors.New("a neural network must contain at least two layers")
 	}

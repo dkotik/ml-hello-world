@@ -2,6 +2,7 @@ package whichdigit
 
 import (
 	neuralnetwork "github.com/dkotik/ml-hellow-world"
+	"github.com/dkotik/ml-hellow-world/snapshot"
 
 	"errors"
 	"fmt"
@@ -66,5 +67,19 @@ func WithNeuralNetwork(nn *neuralnetwork.NeuralNetwork) Option {
 		}
 		o.NeuralNetwork = nn
 		return nil
+	}
+}
+
+func WithNeuralNetworkFile(p string) Option {
+	return func(o *options) error {
+		snapshot, err := snapshot.FromFile(p)
+		if err != nil {
+			return err
+		}
+		nn, err := snapshot.Load()
+		if err != nil {
+			return err
+		}
+		return WithNeuralNetwork(nn)(o)
 	}
 }
