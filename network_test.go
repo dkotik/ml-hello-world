@@ -3,7 +3,7 @@ package neuralnetwork
 import "testing"
 
 func TestNeuralNetworkWithoutLearning(t *testing.T) {
-	nn, err := NewWithoutLearning(2, 2)
+	nn, err := New()
 	if err != nil {
 		t.Fatalf("failed to build a neural network: %v", err)
 	}
@@ -12,9 +12,9 @@ func TestNeuralNetworkWithoutLearning(t *testing.T) {
 		for j, n := range l.Neurons {
 			t.Logf("  - Neuron %d.%d", i+1, j+1)
 			for k, d := range n.Inbound {
-				t.Logf("    - Dendron %d.%d.%d: %.2f", i+1, j+1, k+1, d.Strength)
-				if d.Strength != 0.5 {
-					t.Fatal("one dendron is not 0.5")
+				t.Logf("    - Dendron %d.%d.%d: %.2f", i+1, j+1, k+1, d.Weight)
+				if d.Weight == 0 {
+					t.Fatal("one dendron is not set")
 				}
 			}
 		}

@@ -1,8 +1,34 @@
 package neuralnetwork
 
+import (
+	"math/rand"
+	"time"
+)
+
 type Dendron struct {
 	Weight float64
 	Neuron *Neuron
+}
+
+type DendronFactory func(n *Neuron) (*Dendron, error)
+
+func NewIdenticalDendronFactory(weight float64) DendronFactory {
+	return func(n *Neuron) (*Dendron, error) {
+		return &Dendron{
+			Weight: weight,
+			Neuron: n,
+		}, nil
+	}
+}
+
+func NewPseudoRandomDendronFactory(factor float64) DendronFactory {
+	rand.Seed(time.Now().UnixNano())
+	return func(n *Neuron) (*Dendron, error) {
+		return &Dendron{
+			Weight: rand.Float64() * factor,
+			Neuron: n,
+		}, nil
+	}
 }
 
 // // TODO: use LearningStateMachine instead!

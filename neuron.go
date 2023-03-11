@@ -1,10 +1,5 @@
 package neuralnetwork
 
-import (
-	"fmt"
-	"io"
-)
-
 type Neuron struct {
 	Activation float64
 	Inbound    []*Dendron
@@ -14,23 +9,23 @@ type Neuron struct {
 	// Outbound   []*Dendron
 }
 
-func (n *Neuron) ConnectTo(l *Layer, r io.Reader) (err error) {
-	n.Inbound = make([]*Dendron, len(l.Neurons))
-	for i, inboundNeuron := range l.Neurons {
-		d := &Dendron{
-			Neuron: inboundNeuron,
-		}
-		if err = DecodeFloat64(&d.Weight, r); err != nil {
-			return fmt.Errorf("could not decode dendron data: %w", err)
-		}
-		n.Inbound[i] = d
-		inboundNeuron.NextLayer = l
-		// inboundNeuron.Outbound = append(
-		// 	inboundNeuron.Outbound, n,
-		// )
-	}
-	return nil
-}
+// func (n *Neuron) ConnectTo(l *Layer, r io.Reader) (err error) {
+// 	n.Inbound = make([]*Dendron, len(l.Neurons))
+// 	for i, inboundNeuron := range l.Neurons {
+// 		d := &Dendron{
+// 			Neuron: inboundNeuron,
+// 		}
+// 		if err = DecodeFloat64(&d.Weight, r); err != nil {
+// 			return fmt.Errorf("could not decode dendron data: %w", err)
+// 		}
+// 		n.Inbound[i] = d
+// 		inboundNeuron.NextLayer = l
+// 		// inboundNeuron.Outbound = append(
+// 		// 	inboundNeuron.Outbound, n,
+// 		// )
+// 	}
+// 	return nil
+// }
 
 func (n *Neuron) Activate() {
 	value := float64(0)

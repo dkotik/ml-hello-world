@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
 )
 
 type NeuralNetwork struct {
 	Layers []*Layer
+
+	// LearnedSamplesCount reduces the effect of [Dendron] adjustments with each new processed sample so that later samples do not completely displace learned adjustments from earlier samples.
+	LearnedSamplesCount int
 }
 
 // Active set the first layer manually and propagates activation forward through dendrons.
@@ -55,52 +57,59 @@ func (nn *NeuralNetwork) Activate(r io.Reader) (err error) {
 // 	}
 // }
 
-func (nn *NeuralNetwork) Initialize(f func(li, ni, di int) (float64, error)) (err error) {
-	if f == nil {
-		f = func(li, ni, di int) (float, error) {
-			return rand.Float64(), nil
+// func (nn *NeuralNetwork) Initialize(f func(li, ni, di int) (float64, error)) (err error) {
+// 	if f == nil {
+// 		f = func(li, ni, di int) (float, error) {
+// 			return rand.Float64(), nil
+// 		}
+// 	}
+//
+// 	for li, l := range nn.Layers {
+// 		for ni, n := range l.Neurons {
+// 			for di, d := range n.Inbound {
+// 				d.Weight, err = f(li, ni, di)
+// 				if err != nil {
+// 					return fmt.Errorf("cannot initialize neural network: %w", err)
+// 				}
+// 			}
+// 		}
+// 	}
+// 	return nil
+// }
+
+// func (nn *NeuralNetwork) Dump(w io.Writer) (err error) {
+// 	for _, l := range nn.Layers {
+// 		for _, n := range l.Neurons {
+// 			for _, d := range n.Inbound {
+// 				if err = EncodeFloat64(w, d.Weight); err != nil {
+// 					return fmt.Errorf("could not dump neural network: %w", err)
+// 				}
+// 			}
+// 		}
+// 	}
+// 	return nil
+// }
+
+// func NewWithoutLearning(layerSizes ...int) (*NeuralNetwork, error) {
+// 	return New(newDumbReaderFrom(1.0), layerSizes...)
+// }
+
+func New(withOptions ...Option) (*NeuralNetwork, error) {
+	setupOptions := &options{}
+	for _, option := range append(withOptions, WithDefaultOptions()) {
+		if err := option(setupOptions); err != nil {
+			return nil, fmt.Errorf("failed to setup a neural network: %w", err)
 		}
 	}
 
-	for li, l := range nn.Layers {
-		for ni, n := range l.Neurons {
-			for di, d := range n.Inbound {
-				d.Weight, err = f(li, ni, di)
-				if err != nil {
-					return fmt.Errorf("cannot initialize neural network: %w", err)
-				}
-			}
-		}
-	}
-	return nil
-}
-
-func (nn *NeuralNetwork) Dump(w io.Writer) (err error) {
-	for _, l := range nn.Layers {
-		for _, n := range l.Neurons {
-			for _, d := range n.Inbound {
-				if err = EncodeFloat64(w, d.Weight); err != nil {
-					return fmt.Errorf("could not dump neural network: %w", err)
-				}
-			}
-		}
-	}
-	return nil
-}
-
-func NewWithoutLearning(layerSizes ...int) (*NeuralNetwork, error) {
-	return New(newDumbReaderFrom(1.0), layerSizes...)
-}
-
-func New(r io.Reader, layerSizes ...int) (*NeuralNetwork, error) {
 	network := &NeuralNetwork{
-		Layers: make([]*Layer, len(layerSizes)),
+		Layers: make([]*Layer, len(setupOptions.Layers)),
 	}
 
-	for i, size := range layerSizes {
+	for i, size := range setupOptions.Layers {
 		network.Layers[i] = NewLayer(size)
 		if i > 0 {
-			err := network.Layers[i-1].ConnectTo(network.Layers[i], r)
+			err := network.Layers[i-1].ConnectTo(network.Layers[i], setupOptions.DendronFactory)
 			if err != nil {
 				return nil, fmt.Errorf("failed to connect to layer %d: %w", i, err)
 			}
